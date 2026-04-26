@@ -228,8 +228,9 @@ export default function App() {
       console.error('Error generating content:', error);
       let errorText = 'Oops! Something went wrong. Please try again later.';
       
-      const msg = error?.message?.toLowerCase() || '';
-      const status = error?.status || error?.response?.status;
+      const errorObj = error?.error || error;
+      const msg = errorObj?.message?.toLowerCase() || (typeof error === 'string' ? error.toLowerCase() : JSON.stringify(error).toLowerCase());
+      const status = errorObj?.code || error?.status || error?.response?.status;
       
       if (msg.includes('api key') || status === 403 || status === 401 || msg.includes('permission_denied')) {
         errorText = 'Authentication failed: Invalid API key or missing permissions.';
@@ -243,14 +244,14 @@ export default function App() {
         errorText = 'Server error: The AI service is currently experiencing issues. Please try again later.';
       } else if (msg) {
         try {
-            const parsed = JSON.parse(error.message);
+            const parsed = JSON.parse(error.message || JSON.stringify(error));
             if (parsed.error && parsed.error.message) {
                 errorText = `Error: ${parsed.error.message}`;
             } else {
-                errorText = `Error: ${error.message}`;
+                errorText = `Error: ${error.message || JSON.stringify(error)}`;
             }
         } catch(e) {
-            errorText = `Error: ${error.message}`;
+            errorText = `Error: ${error.message || JSON.stringify(error)}`;
         }
       }
 
@@ -450,8 +451,9 @@ export default function App() {
       console.error('Error generating content:', error);
       let errorText = 'Oops! Something went wrong. Please try again later.';
       
-      const msg = error?.message?.toLowerCase() || '';
-      const status = error?.status || error?.response?.status;
+      const errorObj = error?.error || error;
+      const msg = errorObj?.message?.toLowerCase() || (typeof error === 'string' ? error.toLowerCase() : JSON.stringify(error).toLowerCase());
+      const status = errorObj?.code || error?.status || error?.response?.status;
       
       if (msg.includes('api key') || status === 403 || status === 401 || msg.includes('permission_denied')) {
         errorText = 'Authentication failed: Invalid API key or missing permissions.';
@@ -465,14 +467,14 @@ export default function App() {
         errorText = 'Server error: The AI service is currently experiencing issues. Please try again later.';
       } else if (msg) {
         try {
-            const parsed = JSON.parse(error.message);
+            const parsed = JSON.parse(error.message || JSON.stringify(error));
             if (parsed.error && parsed.error.message) {
                 errorText = `Error: ${parsed.error.message}`;
             } else {
-                errorText = `Error: ${error.message}`;
+                errorText = `Error: ${error.message || JSON.stringify(error)}`;
             }
         } catch(e) {
-            errorText = `Error: ${error.message}`;
+            errorText = `Error: ${error.message || JSON.stringify(error)}`;
         }
       }
 

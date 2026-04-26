@@ -40,7 +40,7 @@ export function VideoGenerator({ isOpen, onClose, onGenerate }: VideoGeneratorPr
         console.warn("aistudio API not available, proceeding without key dialog.");
       }
 
-      const apiKeyToUse = process.env.API_KEY || process.env.GEMINI_API_KEY;
+      const apiKeyToUse = process.env.GEMINI_API_KEY;
       const aiInstance = new GoogleGenAI({ apiKey: apiKeyToUse });
 
       setStatusText('Generating storyboard preview...');
@@ -131,15 +131,22 @@ export function VideoGenerator({ isOpen, onClose, onGenerate }: VideoGeneratorPr
       onClose();
     } catch (err: any) {
       console.error(err);
-      if (err.message?.includes('Requested entity was not found') || err.message?.includes('PERMISSION_DENIED') || err.message?.includes('403')) {
+      const errorObj = err?.error || err;
+      const msg = errorObj?.message?.toLowerCase() || (typeof err === 'string' ? err.toLowerCase() : JSON.stringify(err).toLowerCase());
+      if (msg.includes('requested entity was not found') || msg.includes('permission_denied') || msg.includes('403')) {
         setError("Missing permissions. Veo/Imagen generation requires your own Google Cloud API Key with billing enabled. Please try selecting your API key again.");
         if (typeof window !== 'undefined' && (window as any).aistudio) {
           try { await (window as any).aistudio.openSelectKey(); } catch(e){}
         }
-      } else if (err.message?.includes('429') || err.message?.includes('RESOURCE_EXHAUSTED') || err.message?.includes('quota')) {
+      } else if (msg.includes('429') || msg.includes('resource_exhausted') || msg.includes('quota')) {
         setError("Quota exceeded. You have reached the usage limit for this model. Please check your billing details or wait until your quota resets.");
       } else {
-        setError(err.message || 'An error occurred during video generation.');
+        try {
+            const parsed = JSON.parse(err.message || JSON.stringify(err));
+            setError(parsed?.error?.message || err.message || 'An error occurred during video generation.');
+        } catch(e) {
+            setError(err.message || 'An error occurred during video generation.');
+        }
       }
     } finally {
       setIsGenerating(false);
