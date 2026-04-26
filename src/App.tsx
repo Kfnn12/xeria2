@@ -8,7 +8,9 @@ import { AbcPlayer } from './components/AbcPlayer';
 import { MusicGenerator } from './components/MusicGenerator';
 import { VideoGenerator } from './components/VideoGenerator';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+// ai instance will be created per-request
+
 
 type Message = {
   id: string;
@@ -169,6 +171,7 @@ export default function App() {
     setIsFileProcessing(hasFile);
 
     try {
+      const ai = new GoogleGenAI({ apiKey: (import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) || (import.meta.env && import.meta.env.VITE_API_KEY) || process.env.GEMINI_API_KEY || process.env.API_KEY || '' });
       const responseStream = await ai.models.generateContentStream({
         model: selectedModel,
         contents: contentsPayload,
@@ -225,7 +228,7 @@ export default function App() {
       }
     } catch (error: any) {
       setIsFileProcessing(false);
-      console.error('Error generating content:', error);
+      // console.error('Error generating content:', error);
       let errorText = 'Oops! Something went wrong. Please try again later.';
       
       const errorObj = error?.error || error;
@@ -234,8 +237,14 @@ export default function App() {
       
       if (msg.includes('api key') || status === 403 || status === 401 || msg.includes('permission_denied')) {
         errorText = 'Authentication failed: Invalid API key or missing permissions.';
+        if (typeof window !== 'undefined' && (window as any).aistudio) {
+          try { await (window as any).aistudio.openSelectKey(); } catch(e){}
+        }
       } else if (msg.includes('quota') || msg.includes('429') || status === 429 || msg.includes('resource_exhausted')) {
         errorText = 'Quota exceeded: You have reached the usage limit for this model. Please check your billing details or wait until your quota resets.';
+        if (typeof window !== 'undefined' && (window as any).aistudio) {
+          try { await (window as any).aistudio.openSelectKey(); } catch(e){}
+        }
       } else if (msg.includes('not found') || status === 404) {
         errorText = 'Model not found: The specified AI model is not available or does not exist.';
       } else if (msg.includes('fetch') || msg.includes('network') || msg.includes('failed to fetch')) {
@@ -392,6 +401,7 @@ export default function App() {
     setIsFileProcessing(hasFile);
 
     try {
+      const ai = new GoogleGenAI({ apiKey: (import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) || (import.meta.env && import.meta.env.VITE_API_KEY) || process.env.GEMINI_API_KEY || process.env.API_KEY || '' });
       const responseStream = await ai.models.generateContentStream({
         model: selectedModel,
         contents: contentsPayload,
@@ -448,7 +458,7 @@ export default function App() {
       }
     } catch (error: any) {
       setIsFileProcessing(false);
-      console.error('Error generating content:', error);
+      // console.error('Error generating content:', error);
       let errorText = 'Oops! Something went wrong. Please try again later.';
       
       const errorObj = error?.error || error;
@@ -457,8 +467,14 @@ export default function App() {
       
       if (msg.includes('api key') || status === 403 || status === 401 || msg.includes('permission_denied')) {
         errorText = 'Authentication failed: Invalid API key or missing permissions.';
+        if (typeof window !== 'undefined' && (window as any).aistudio) {
+          try { await (window as any).aistudio.openSelectKey(); } catch(e){}
+        }
       } else if (msg.includes('quota') || msg.includes('429') || status === 429 || msg.includes('resource_exhausted')) {
         errorText = 'Quota exceeded: You have reached the usage limit for this model. Please check your billing details or wait until your quota resets.';
+        if (typeof window !== 'undefined' && (window as any).aistudio) {
+          try { await (window as any).aistudio.openSelectKey(); } catch(e){}
+        }
       } else if (msg.includes('not found') || status === 404) {
         errorText = 'Model not found: The specified AI model is not available or does not exist.';
       } else if (msg.includes('fetch') || msg.includes('network') || msg.includes('failed to fetch')) {

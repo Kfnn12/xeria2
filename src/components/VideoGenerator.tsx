@@ -10,6 +10,7 @@ interface VideoGeneratorProps {
 
 export function VideoGenerator({ isOpen, onClose, onGenerate }: VideoGeneratorProps) {
   const [prompt, setPrompt] = useState('');
+  const [negativePrompt, setNegativePrompt] = useState('');
   const [aspectRatio, setAspectRatio] = useState('16:9');
   const [resolution, setResolution] = useState('1080p');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -40,8 +41,13 @@ export function VideoGenerator({ isOpen, onClose, onGenerate }: VideoGeneratorPr
         console.warn("aistudio API not available, proceeding without key dialog.");
       }
 
-      const apiKeyToUse = process.env.GEMINI_API_KEY;
-      const aiInstance = new GoogleGenAI({ apiKey: apiKeyToUse });
+      const apiKeyToUse = (import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) || (import.meta.env && import.meta.env.VITE_API_KEY) || process.env.GEMINI_API_KEY || process.env.API_KEY || '';
+      const aiInstance = new GoogleGenAI({ apiKey: (import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) || (import.meta.env && import.meta.env.VITE_API_KEY) || process.env.GEMINI_API_KEY || process.env.API_KEY || '' });
+
+      let finalPromptText = prompt.trim();
+      if (negativePrompt.trim()) {
+        finalPromptText += `\n\nCRITICAL INSTRUCTION: Do NOT include, generate, or add any of the following: ${negativePrompt.trim()}`;
+      }
 
       setStatusText('Generating storyboard preview...');
       setProgress(5);
@@ -53,7 +59,7 @@ export function VideoGenerator({ isOpen, onClose, onGenerate }: VideoGeneratorPr
         const imageResult = await aiInstance.models.generateContent({
           model: 'gemini-3.1-flash-image-preview',
           contents: {
-            parts: [{ text: prompt.trim() }]
+            parts: [{ text: finalPromptText }]
           },
           config: {
             imageConfig: {
@@ -75,7 +81,7 @@ export function VideoGenerator({ isOpen, onClose, onGenerate }: VideoGeneratorPr
 
       let operation = await aiInstance.models.generateVideos({
         model: 'veo-3.1-lite-generate-preview',
-        prompt: prompt.trim(),
+        prompt: finalPromptText,
         config: {
           numberOfVideos: 1,
           resolution: resolution, 
@@ -128,6 +134,7 @@ export function VideoGenerator({ isOpen, onClose, onGenerate }: VideoGeneratorPr
 
       onGenerate(prompt, videoUrl);
       setPrompt('');
+      setNegativePrompt('');
       onClose();
     } catch (err: any) {
       console.error(err);
@@ -140,6 +147,9 @@ export function VideoGenerator({ isOpen, onClose, onGenerate }: VideoGeneratorPr
         }
       } else if (msg.includes('429') || msg.includes('resource_exhausted') || msg.includes('quota')) {
         setError("Quota exceeded. You have reached the usage limit for this model. Please check your billing details or wait until your quota resets.");
+        if (typeof window !== 'undefined' && (window as any).aistudio) {
+          try { await (window as any).aistudio.openSelectKey(); } catch(e){}
+        }
       } else {
         try {
             const parsed = JSON.parse(err.message || JSON.stringify(err));
@@ -199,6 +209,18 @@ export function VideoGenerator({ isOpen, onClose, onGenerate }: VideoGeneratorPr
                       onChange={(e) => setPrompt(e.target.value)}
                       disabled={isGenerating}
                       className="w-full bg-[#2d2d30] border border-[#3c4043] rounded-xl px-4 py-3 text-sm text-[#e3e3e3] outline-none focus:border-[#8ab4f8] resize-none disabled:opacity-50"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-300">Negative Prompt</label>
+                    <input
+                      type="text"
+                      placeholder="What NOT to include (e.g., 'text, watermarks, humans')"
+                      value={negativePrompt}
+                      onChange={(e) => setNegativePrompt(e.target.value)}
+                      disabled={isGenerating}
+                      className="w-full bg-[#2d2d30]/50 border border-[#3c4043] rounded-lg px-4 py-2 text-sm text-[#b0b0b0] outline-none focus:border-[#8ab4f8] disabled:opacity-50 placeholder-[#6c6f72]"
                     />
                   </div>
 

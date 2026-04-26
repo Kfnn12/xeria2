@@ -4,7 +4,6 @@ import { X, Check, FileImage, RotateCw, Contrast, Sun, Wand2, Loader2 } from 'lu
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI } from '@google/genai';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 interface ImageEditorProps {
   isOpen: boolean;
@@ -72,6 +71,7 @@ export function ImageEditor({ isOpen, onClose, imageSrc, onSave }: ImageEditorPr
       }
 
       const generateSingle = async () => {
+        const ai = new GoogleGenAI({ apiKey: (import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) || (import.meta.env && import.meta.env.VITE_API_KEY) || process.env.GEMINI_API_KEY || process.env.API_KEY || '' });
         const response = await ai.models.generateContent({
           model: 'gemini-2.5-flash-image',
           contents: {
@@ -132,8 +132,14 @@ export function ImageEditor({ isOpen, onClose, imageSrc, onSave }: ImageEditorPr
       
       if (msg.includes('api key') || status === 403 || status === 401 || msg.includes('permission_denied')) {
         errorText = 'Authentication failed: Invalid API key or missing permissions.';
+        if (typeof window !== 'undefined' && (window as any).aistudio) {
+          try { await (window as any).aistudio.openSelectKey(); } catch(e){}
+        }
       } else if (msg.includes('quota') || msg.includes('429') || status === 429 || msg.includes('resource_exhausted')) {
         errorText = 'Quota exceeded: You have reached the usage limit for this model. Please check your billing details or wait until your quota resets.';
+        if (typeof window !== 'undefined' && (window as any).aistudio) {
+          try { await (window as any).aistudio.openSelectKey(); } catch(e){}
+        }
       } else if (msg.includes('not found') || status === 404) {
         errorText = 'Model not found: The specified AI model is not available or does not exist.';
       } else if (msg.includes('fetch') || msg.includes('network') || msg.includes('failed to fetch')) {
