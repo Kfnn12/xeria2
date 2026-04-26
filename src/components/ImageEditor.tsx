@@ -71,7 +71,7 @@ export function ImageEditor({ isOpen, onClose, imageSrc, onSave }: ImageEditorPr
       }
 
       const generateSingle = async () => {
-        const ai = new GoogleGenAI({ apiKey: (import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) || (import.meta.env && import.meta.env.VITE_API_KEY) || process.env.GEMINI_API_KEY || process.env.API_KEY || '' });
+        const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY || '' });
         const response = await ai.models.generateContent({
           model: 'gemini-2.5-flash-image',
           contents: {

@@ -171,7 +171,7 @@ export default function App() {
     setIsFileProcessing(hasFile);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: (import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) || (import.meta.env && import.meta.env.VITE_API_KEY) || process.env.GEMINI_API_KEY || process.env.API_KEY || '' });
+      const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY || '' });
       const responseStream = await ai.models.generateContentStream({
         model: selectedModel,
         contents: contentsPayload,
@@ -236,7 +236,7 @@ export default function App() {
       const status = errorObj?.code || error?.status || error?.response?.status;
       
       if (msg.includes('api key') || status === 403 || status === 401 || msg.includes('permission_denied')) {
-        errorText = 'Authentication failed: Invalid API key or missing permissions.';
+        errorText = 'Authentication failed: Invalid API key or missing permissions. If deploying to Vercel, ensure VITE_GEMINI_API_KEY or GEMINI_API_KEY is set in your Environment Variables.';
         if (typeof window !== 'undefined' && (window as any).aistudio) {
           try { await (window as any).aistudio.openSelectKey(); } catch(e){}
         }
@@ -401,7 +401,7 @@ export default function App() {
     setIsFileProcessing(hasFile);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: (import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) || (import.meta.env && import.meta.env.VITE_API_KEY) || process.env.GEMINI_API_KEY || process.env.API_KEY || '' });
+      const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY || '' });
       const responseStream = await ai.models.generateContentStream({
         model: selectedModel,
         contents: contentsPayload,
@@ -466,7 +466,7 @@ export default function App() {
       const status = errorObj?.code || error?.status || error?.response?.status;
       
       if (msg.includes('api key') || status === 403 || status === 401 || msg.includes('permission_denied')) {
-        errorText = 'Authentication failed: Invalid API key or missing permissions.';
+        errorText = 'Authentication failed: Invalid API key or missing permissions. If deploying to Vercel, ensure VITE_GEMINI_API_KEY or GEMINI_API_KEY is set in your Environment Variables.';
         if (typeof window !== 'undefined' && (window as any).aistudio) {
           try { await (window as any).aistudio.openSelectKey(); } catch(e){}
         }

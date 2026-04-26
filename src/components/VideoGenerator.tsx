@@ -14,7 +14,7 @@ export function VideoGenerator({ isOpen, onClose, onGenerate }: VideoGeneratorPr
   const [aspectRatio, setAspectRatio] = useState('16:9');
   const [resolution, setResolution] = useState('1080p');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<React.ReactNode | null>(null);
   const [progress, setProgress] = useState<number>(0);
   const [statusText, setStatusText] = useState<string>('');
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -41,8 +41,8 @@ export function VideoGenerator({ isOpen, onClose, onGenerate }: VideoGeneratorPr
         console.warn("aistudio API not available, proceeding without key dialog.");
       }
 
-      const apiKeyToUse = (import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) || (import.meta.env && import.meta.env.VITE_API_KEY) || process.env.GEMINI_API_KEY || process.env.API_KEY || '';
-      const aiInstance = new GoogleGenAI({ apiKey: (import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) || (import.meta.env && import.meta.env.VITE_API_KEY) || process.env.GEMINI_API_KEY || process.env.API_KEY || '' });
+      const apiKeyToUse = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY || '';
+      const aiInstance = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY || '' });
 
       let finalPromptText = prompt.trim();
       if (negativePrompt.trim()) {
@@ -141,12 +141,44 @@ export function VideoGenerator({ isOpen, onClose, onGenerate }: VideoGeneratorPr
       const errorObj = err?.error || err;
       const msg = errorObj?.message?.toLowerCase() || (typeof err === 'string' ? err.toLowerCase() : JSON.stringify(err).toLowerCase());
       if (msg.includes('requested entity was not found') || msg.includes('permission_denied') || msg.includes('403')) {
-        setError("Missing permissions. Veo/Imagen generation requires your own Google Cloud API Key with billing enabled. Please try selecting your API key again.");
+        setError(
+          <div className="space-y-2">
+            <h4 className="font-semibold text-red-300">Missing Permissions</h4>
+            <p>Veo generation requires your own Google Cloud API Key with billing enabled.</p>
+            <p>To fix this:</p>
+            <ol className="list-decimal pl-5 space-y-1">
+              <li>Ensure billing is enabled for your project.</li>
+              <li>Ensure you have access to the Veo API.</li>
+              <li>Try selecting your API key again using the Settings menu.</li>
+            </ol>
+            <p>
+              <a href="https://cloud.google.com/vertex-ai/generative-ai/docs/reference/veo-api" target="_blank" rel="noopener noreferrer" className="underline hover:text-white transition-colors">
+                View Veo Documentation &rarr;
+              </a>
+            </p>
+          </div>
+        );
         if (typeof window !== 'undefined' && (window as any).aistudio) {
           try { await (window as any).aistudio.openSelectKey(); } catch(e){}
         }
       } else if (msg.includes('429') || msg.includes('resource_exhausted') || msg.includes('quota')) {
-        setError("Quota exceeded. You have reached the usage limit for this model. Please check your billing details or wait until your quota resets.");
+        setError(
+          <div className="space-y-2">
+            <h4 className="font-semibold text-red-300">Quota Exceeded</h4>
+            <p>You have reached the usage limit for this model.</p>
+            <p className="mt-1">
+              Please check your billing details or wait until your quota resets.
+            </p>
+            <div className="mt-2 text-red-300 font-mono text-xs bg-red-900/30 p-2 rounded-md break-all">
+              {errorObj?.message || 'Error 429: Resource Exhausted'}
+            </div>
+            <p className="mt-2">
+              <a href="https://ai.google.dev/gemini-api/docs/rate-limits" target="_blank" rel="noopener noreferrer" className="underline hover:text-white transition-colors">
+                Learn more about Rate Limits &rarr;
+              </a>
+            </p>
+          </div>
+        );
         if (typeof window !== 'undefined' && (window as any).aistudio) {
           try { await (window as any).aistudio.openSelectKey(); } catch(e){}
         }
@@ -282,9 +314,11 @@ export function VideoGenerator({ isOpen, onClose, onGenerate }: VideoGeneratorPr
                 )}
 
                 {error && (
-                  <div className="flex items-start gap-2 text-red-400 bg-red-400/10 p-3 rounded-xl border border-red-400/20 text-sm">
-                    <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                    <p>{error}</p>
+                  <div className="flex items-start gap-2 text-red-400 bg-red-400/10 p-3 rounded-xl border border-red-400/20 text-sm overflow-hidden">
+                    <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" />
+                    <div className="flex-1 w-full space-y-1">
+                        {typeof error === "string" ? <p>{error}</p> : error}
+                    </div>
                   </div>
                 )}
 
