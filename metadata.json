@@ -1,0 +1,6 @@
+{
+  "name": "XER AI",
+  "description": "A user-friendly chat interface interacting with Gemini 3.1 Pro model.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": []
+}
